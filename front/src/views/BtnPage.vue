@@ -8,7 +8,7 @@
                     <icon  type="md-power" size="30" @click="logout" style="cursor: pointer;"/><br>
                     <h3>协调器状态:<br>编号:{{" "+num+' 号'}}<br>电量:{{" "+electricity+' V'}}<br>温度:{{" "+temper+' °C'}}</h3>
                     <p style="text-align: center; margin-top: 20px;">
-                        <button @click="dialog=true;alertDialog=false" class="settingBtn">设置</button>
+                        <button @click="dialog=true;" class="settingBtn">设置</button>
                         <button @click="showAllTweets" class="settingBtn">全部数据</button>
                     </p>
                 </div>
@@ -18,12 +18,12 @@
                 <el-main>
                     <div class="coordinatorPart">
                         <h1>协调器</h1>
-                        <MyButton v-for="obj in coordinatorData" :address="obj.router_id" :key="obj.id" type="coordinator" matchId=""/>
+                        <MyButton v-for="obj in coordinatorData" :address="obj.router_id" :ref="obj.router_id" :key="obj.id" type="coordinator" matchId=""/>
                     </div>
 
                     <div v-for="arr of matchArr" :id="'classification:' + arr[0].CLASSIFICATION" :key="arr[0].macaddress" class="btnPart">
                         <h1>classification:{{arr[0].installAddress | addressSlice}}</h1>
-                        <MyButton v-for="obj of arr" :matchId="obj.macaddress" :address="obj.installAddress" ref="button" :key="obj.id" type="node"/>
+                        <MyButton v-for="obj of arr" :matchId="obj.macaddress" :address="obj.installAddress" :ref="obj.macaddress" :key="obj.id" type="node"/>
                     </div>
                 </el-main>
             </el-container>
@@ -76,7 +76,8 @@
         name: "BtnPage",
         data() {
             return {
-                alertDialog: false, // 设置界面 是否修改
+                alertDialog: false, // 设置界面阈值是否修改
+                alertMacaddress: false, // 设置界面macaddress是否修改
                 dialog: false,      // 设置界面是否弹出
                 loading: false,     // 设置界面确定按钮是否加载中字样
                 user: "--",     // 用户名
@@ -204,14 +205,18 @@
                 })
                 for (let i=0; i<this.matchData.length; i++) {
                     if (this.matchData[i].installAddress === this.form.selector) {
-                        if (this.matchData[i].macaddress === this.macaddress) {
-                            this.alertDialog = false;
+                        if (this.matchData[i].macaddress !== this.macaddress) {
+                            this.alertMacaddress = true;
                             break;
                         }
                     }
                 }
 
-                if (!this.alertDialog) {
+                if (this.alarmThreshold1 !== this.form.alarmThreshold1 || this.alarmThreshold2 !== this.form.alarmThreshold2 || this.alarmThreshold3 !== this.form.alarmThreshold3) {
+                    this.alertDialog = true;
+                }
+
+                if (!this.alertDialog && !this.alertMacaddress) {
                     this.cancelForm();
                     return;
                 }
@@ -219,22 +224,25 @@
                 //数据被修改，询问是否保存数据
                 this.$confirm('确定要提交表单吗？')
                     .then(_ => {
-                    this.loading = true;
-                    // 同步改动的报警阀值
-                    this.alarmThreshold1 = this.form.alarmThreshold1;
-                    this.alarmThreshold2 = this.form.alarmThreshold2;
-                    this.alarmThreshold3 = this.form.alarmThreshold3;
+                        this.loading = true;
+                        // 同步改动的报警阀值
+                        this.alarmThreshold1 = this.form.alarmThreshold1;
+                        this.alarmThreshold2 = this.form.alarmThreshold2;
+                        this.alarmThreshold3 = this.form.alarmThreshold3;
 
-                    localStorage.setItem("alarmThreshold1", this.form.alarmThreshold1);
-                    localStorage.setItem("alarmThreshold2", this.form.alarmThreshold2);
-                    localStorage.setItem("alarmThreshold3", this.form.alarmThreshold3);
+                        localStorage.setItem("alarmThreshold1", this.form.alarmThreshold1);
+                        localStorage.setItem("alarmThreshold2", this.form.alarmThreshold2);
+                        localStorage.setItem("alarmThreshold3", this.form.alarmThreshold3);
 
-                    // 修改数据库中的macaddress
-                    client.modifyMacAddress(this.form.selector, this.macaddress, ()=> {
-                        this.refresh = !this.refresh;
-                    })
+                        if (this.alertMacaddress) {
+                            // 修改数据库中的macaddress
+                            client.modifyMacAddress(this.form.selector, this.macaddress, ()=> {
+                                this.refresh = !this.refresh;
+                            })
+                            this.alertMacaddress = false;
+                        }
 
-                    this.timer = setTimeout(() => {
+                        this.timer = setTimeout(() => {
                             done();
                             // 动画关闭需要一定的时间
                             setTimeout(() => {
@@ -248,12 +256,14 @@
             cancelForm() {
                 this.loading = false;
                 this.dialog = false;
+                this.alertMacaddress = false;
                 // 当未确认退出时候，同步form和实际的阀值
                 this.form.alarmThreshold1 = this.alarmThreshold1;
                 this.form.alarmThreshold2 = this.alarmThreshold2;
                 this.form.alarmThreshold3 = this.alarmThreshold3;
 
-                this.form.selector = this.matchArr[0][0].installAddress;
+                this.form.selector = this.matchData[0].installAddress;
+                this.macaddress = this.matchData[0].macaddress;
                 clearTimeout(this.timer);
             },
 
@@ -293,28 +303,28 @@
             })
 
             client.getNodeStatus((tweets)=> {
-                let index = 0
-                tweets.forEach((tweet)=> {
-                    index = 0
-                    index = this.matchIdArr.indexOf(tweet.macaddress);
-                    if (index >= 0) {
-                        if (tweet.amplitude > this.alarmThreshold1) {
-                            this.$refs.button[index].state = 1;
-                        } else if (tweet.amplitude > this.alarmThreshold2) {
-                            this.$refs.button[index].state = 2;
-                        } else if (tweet.amplitude > this.alarmThreshold3) {
-                            this.$refs.button[index].state = 3;
-                        } else if (tweet.amplitude > -1) {
-                            this.$refs.button[index].state = 4;
+                for (let i=0; i<this.matchIdArr.length; i++) {
+                    this.$refs[this.matchIdArr[i]][0].state = 0;
+                }
+                for (let i=0; i<tweets.length; i++) {
+                    if (this.$refs[tweets[i].macaddress][0]) {
+                        if (tweets[i].amplitude > this.alarmThreshold1) {
+                            this.$refs[tweets[i].macaddress][0].state = 1;
+                        } else if (tweets[i].amplitude > this.alarmThreshold2) {
+                            this.$refs[tweets[i].macaddress][0].state = 2;
+                        } else if (tweets[i].amplitude > this.alarmThreshold3) {
+                            this.$refs[tweets[i].macaddress][0].state = 3;
+                        } else if (tweets[i].amplitude > -1) {
+                            this.$refs[tweets[i].macaddress][0].state = 4;
                         } else {
-                            this.$refs.button[index].state = 0;
+                            this.$refs[tweets[i].macaddress][0].state = 0;
                         }
                     }
-                })
+                }
             })
         },
         mounted() {
-               
+            console.log(this.$refs)
         },
         watch: {
             form: {
@@ -337,20 +347,32 @@
                     this.macaddress = this.matchArr[0][0].macaddress;
                 }
             },
-            macaddress() {
-                // 当切换选项也会触发提交
-                this.alertDialog = true;
-            },
             // refresh变化时更新matchData、classificationArr、matchArr、matchIdArr
             refresh() {
                 // 从数据库获取的位置 mac地址 所属协调器信息
                 client.getMatchData((matchData)=> {
-                    this.matchData = matchData
+                    this.matchData = matchData;
+                    client.getNodeStatus((tweets)=> {
+                        for (let i=0; i<this.matchIdArr.length; i++) {
+                            this.$refs[this.matchIdArr[i]][0].state = 0;
+                        }
+                        for (let i=0; i<tweets.length; i++) {
+                            if (this.$refs[tweets[i].macaddress][0]) {
+                                if (tweets[i].amplitude > this.alarmThreshold1) {
+                                    this.$refs[tweets[i].macaddress][0].state = 1;
+                                } else if (tweets[i].amplitude > this.alarmThreshold2) {
+                                    this.$refs[tweets[i].macaddress][0].state = 2;
+                                } else if (tweets[i].amplitude > this.alarmThreshold3) {
+                                    this.$refs[tweets[i].macaddress][0].state = 3;
+                                } else if (tweets[i].amplitude > -1) {
+                                    this.$refs[tweets[i].macaddress][0].state = 4;
+                                } else {
+                                    this.$refs[tweets[i].macaddress][0].state = 0;
+                                }
+                            }
+                        }
+                    })
                 })
-                // 全部按钮置灰色
-                for (let i = 0; i < this.$refs.button.length; i++) {
-                    this.$refs.button[i].state = 0
-                }
             }
         },
         activated() {
@@ -358,24 +380,27 @@
             this.timer_1 = setInterval(()=> {
                 // 根据数据库信息判断按钮颜色
                 client.getNodeStatus((tweets)=> {
-                    let index = 0;
-                    tweets.forEach((tweet)=> {
-                        index = 0;
-                        index = this.matchIdArr.indexOf(tweet.macaddress);
-                        if (index >= 0) {
-                            if (tweet.amplitude > this.alarmThreshold1) {
-                                this.$refs.button[index].state = 1;
-                            } else if (tweet.amplitude > this.alarmThreshold2) {
-                                this.$refs.button[index].state = 2;
-                            } else if (tweet.amplitude > this.alarmThreshold3) {
-                                this.$refs.button[index].state = 3;
-                            } else if (tweet.amplitude > -1) {
-                                this.$refs.button[index].state = 4;
+                    for (let i=0; i<this.matchIdArr.length; i++) {
+                        this.$refs[this.matchIdArr[i]][0].state = 0;
+                    }
+                    for (let i=0; i<tweets.length; i++) {
+                        if (tweets[i].bridge_id === "25-03") {
+                            console.log(tweets[i].macaddress)
+                        }
+                        if (this.$refs[tweets[i].macaddress][0]) {
+                            if (tweets[i].amplitude > this.alarmThreshold1) {
+                                this.$refs[tweets[i].macaddress][0].state = 1;
+                            } else if (tweets[i].amplitude > this.alarmThreshold2) {
+                                this.$refs[tweets[i].macaddress][0].state = 2;
+                            } else if (tweets[i].amplitude > this.alarmThreshold3) {
+                                this.$refs[tweets[i].macaddress][0].state = 3;
+                            } else if (tweets[i].amplitude > -1) {
+                                this.$refs[tweets[i].macaddress][0].state = 4;
                             } else {
-                                this.$refs.button[index].state = 0;
+                                this.$refs[tweets[i].macaddress][0].state = 0;
                             }
                         }
-                    })
+                    }
                 })
             }, 1000)
         },

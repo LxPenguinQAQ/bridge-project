@@ -67,6 +67,23 @@ app.post("/login", function(req, res) {
 	})
 })
 
+app.get("/test", function(req, res) {
+	const {matchId} = req.query
+	db.test(matchId, function(err, data) {
+		if (err) {
+			res.status(500).send({
+				msg: "test failed as server error"
+			})
+		} else if (data) {
+			res.status(200).send(data);
+		} else {
+			res.status(400).send({
+				msg: "test failed as request error"
+			})
+		}
+	})
+})
+
 app.listen(3000, err => {
 	if (!err) console.log('Successful Connection! Please Start Your Operation! The Port 3000')
 })

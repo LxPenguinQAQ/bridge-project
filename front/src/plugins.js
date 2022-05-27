@@ -35,7 +35,7 @@ export default {
         Vue.filter("addressSlice", function(value) {
             const arr = value.split("-")
             arr.pop();
-            return arr.join("-");
+            return arr.pop();
             
         })
 

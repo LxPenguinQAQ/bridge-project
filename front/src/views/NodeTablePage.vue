@@ -132,7 +132,7 @@
 
     import MyButton from "./MyButton.vue"
 
-	import {calxyzs} from "../findpink.js"
+	import {threebag} from "../buma_cal.js"
 
     const client = require("../client")
 
@@ -164,10 +164,10 @@
                 tableColumn: [  // 表格标题
                     {key: 1, field: 'bridge_id', title: '位置', width: "12%"},
                     {key: 2, field: 'amplitude', title: '振幅', width: "24%"},
-                    {key: 3, field: 'frequency', title: '频率', width: "5%"},
+                    {key: 3, field: 'frequency', title: '频率', width: "10%"},
                     {key: 4, field: 'electricity', title: '电量', width: "15%"},
                     {key: 5, field: 'voltage', title: '电压', width: "10%"},
-                    {key: 6, field: 'read_time', title: '时间', width: "24%"},
+                    {key: 6, field: 'read_time', title: '时间', width: "19%"},
                     {key: 7, field: 'showdata', title: '查看数据', width: "10%"},
                 ],
                 tableData: [],  // 表格数据
@@ -177,12 +177,19 @@
                     pageSize: 10,	// 每页数据个数
                     totalResult: 100	// 总共数据个数
                 },
+				// x轴加速度
 				opinionData1: [],
+				// y轴加速度
 				opinionData2: [],
+				// z轴加速度
 				opinionData3: [],
+				// 振幅趋势数据
 				opinionData4: [],
+				// 频率趋势数据
 				opinionData5: [],
+				// 电压趋势数据
 				opinionData6: [],
+				// 综合加速度
 				opinionData7: [],
 				globalVar1: [],
 				globalVar2: [],
@@ -247,11 +254,12 @@
 						let readData = tweets[0]["sensordata"]
 					
 						this.globalVar2 = []
-						var obj = calxyzs(readData);
+						var obj = threebag(readData);
 						this.opinionData1 = obj.x;
 						this.opinionData2 = obj.y;
 						this.opinionData3 = obj.z;
 
+						// 综合加速度
 						for (let i = 0; i < this.opinionData1.length; i++) {
 							this.opinionData7[i] = Math.sqrt(Math.pow(this.opinionData1[i], 2) + Math.pow(this.opinionData2[i], 2) + Math.pow(this.opinionData3[i], 2))
 						}
@@ -865,6 +873,10 @@
         margin: auto;
         margin-top: 25px;
     }
+
+	h2 {
+		text-align: center;
+	}
 
 	div.title {
 		width: 400px;

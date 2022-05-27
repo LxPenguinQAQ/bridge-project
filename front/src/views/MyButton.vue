@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip :content="address" placement="bottom" effect="light">
+    <el-tooltip :content="address.split('-').length === 2 ? address : address.split('-').slice(1).join('-') || address" placement="bottom" effect="light">
         <button class="QPushbutton" :state="state" @click="jumpPage()">{{address.split("-").pop()}}</button>
     </el-tooltip>
 </template>

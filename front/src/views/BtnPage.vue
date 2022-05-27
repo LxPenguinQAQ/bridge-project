@@ -5,11 +5,12 @@
             <el-aside width="200px">
                 <div class="info">
                     <h2>用户名:&nbsp;{{user}}</h2>
-                    <icon  type="md-power" size="30" @click="logout" style="cursor: pointer;"/><br>
+                    <div id="logout"><icon type="md-power" size="30" @click="logout" class="icon"/></div><br>
                     <h3>协调器状态:<br>编号:{{" "+num+' 号'}}<br>电量:{{" "+electricity+' V'}}<br>温度:{{" "+temper+' °C'}}</h3>
                     <p style="text-align: center; margin-top: 20px;">
                         <button @click="dialog=true;" class="settingBtn">设置</button>
                         <button @click="showAllTweets" class="settingBtn">全部数据</button>
+                        <button @click="test" class="settingBtn">测试用接口</button>
                     </p>
                 </div>
             </el-aside>
@@ -21,8 +22,8 @@
                         <MyButton v-for="obj in coordinatorData" :address="obj.router_id" :ref="obj.router_id" :key="obj.id" type="coordinator" matchId=""/>
                     </div>
 
-                    <div v-for="arr of matchArr" :id="'classification:' + arr[0].CLASSIFICATION" :key="arr[0].macaddress" class="btnPart">
-                        <h1>classification:{{arr[0].installAddress | addressSlice}}</h1>
+                    <div v-for="arr of matchArr" :id="'classification:' + arr[0].CLASSIFICATION" :key="arr[0].bridge_id" class="btnPart">
+                        <h1>bridge_id:{{arr[0].installAddress | addressSlice}}</h1>
                         <MyButton v-for="obj of arr" :matchId="obj.macaddress" :address="obj.installAddress" :ref="obj.macaddress" :key="obj.id" type="node"/>
                     </div>
                 </el-main>
@@ -49,13 +50,15 @@
                         <el-input v-model.number="form.alarmThreshold3" autocomplete="off" style="width: 50%;"></el-input>
                     </el-form-item>
                     <h2>子节点mac地址配置</h2>
-                    <el-form-item label="阻尼器编号" style="margin-top: 20px">
-                        <el-select v-model="form.selector">
+                    <label>阻尼器编号</label>
+                    <el-form-item style="margin-top: 20px">
+                        <el-select v-model="form.selector" style="width: 45%;">
                             <p v-for="(arr, index) in matchArr" :key="index"><el-option v-for="(obj, index) in arr" :label="obj.installAddress" :value="obj.installAddress" :key="index"></el-option></p>
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="子字节mac地址:" style="margin-top: 20px">
-                        <el-input v-model="macaddress" autocomplete="off" style="width: 50%;" ></el-input>
+                    <label>子字节mac地址</label>
+                    <el-form-item style="margin-top: 20px">
+                        <el-input v-model="macaddress" autocomplete="off" style="width: 45%;" ></el-input>
                     </el-form-item>
                 </el-form>
                 <div class="demo-drawer__footer" style="margin-left: 35%; margin-right: 35%; margin-top: 20%">
@@ -85,9 +88,9 @@
                 electricity: "--",
                 temper: "--",
                 // 报警阀值
-                alarmThreshold1: localStorage.getItem("alarmThreshold1") || 150,   
-				alarmThreshold2: localStorage.getItem("alarmThreshold2") || 100,
-				alarmThreshold3: localStorage.getItem("alarmThreshold3") || 70,
+                alarmThreshold1: Number(localStorage.getItem("alarmThreshold1")) || 150,   
+				alarmThreshold2: Number(localStorage.getItem("alarmThreshold2")) || 100,
+				alarmThreshold3: Number(localStorage.getItem("alarmThreshold3")) || 70,
                 // 设置页面中显示
                 form: {
                     alarmThreshold1: 0,
@@ -257,6 +260,7 @@
                 this.loading = false;
                 this.dialog = false;
                 this.alertMacaddress = false;
+                this.alertDialog = false;
                 // 当未确认退出时候，同步form和实际的阀值
                 this.form.alarmThreshold1 = this.alarmThreshold1;
                 this.form.alarmThreshold2 = this.alarmThreshold2;
@@ -270,6 +274,11 @@
             // 显示所有数据
             showAllTweets() {
                 this.$router.push({path:'NodeTablePage', query: {matchId: "all"}});
+            },
+
+            // 测试用接口
+            test() {
+                this.$router.push("/Temp");
             }
         },
         created() {
@@ -444,10 +453,6 @@
         line-height: 50px;
     }
 
-    /* body > .el-container {
-        
-    } */
-
     .el-container:nth-child(5) .el-aside,
     .el-container:nth-child(6) .el-aside {
         line-height: 260px;
@@ -469,6 +474,10 @@
         margin: auto;
         margin-top: 10px;
         border: 2px groove blue; 
+    }
+
+    div.demo-drawer__content {
+        text-align: center;
     }
 
     /* 设置按钮样式 */
@@ -495,9 +504,22 @@
         display: flex;
         justify-content: center;
     }
+    div#logout {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        /* border: 2px solid gray; */
+        position: relative;
+    }
+    .icon {
+        cursor: pointer;
+        position: absolute;
+        top: 5px;
+        right: 5px;
 
-    el-form {
-        display: flex;
-        justify-content: center;
+    }
+    div#logout:hover {
+        background-color: rgba(96, 96, 96, 0.2);
     }
 </style>

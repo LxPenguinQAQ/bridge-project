@@ -53,11 +53,12 @@
             return {
                 loading: false,
                 tableColumn: [
-                    {key: 1, field: "id_main", title: "协调器ID"},
-                    {key: 2, field: "amount", title: "一次接收的数量"},
-                    {key: 3, field: "adc_main", title: "电量"},
-                    {key: 4, field: "temper_main", title: "温度"},
-                    {key: 5, field: "event_time", title: "时间"}
+                    {key: 1, field: "id_main", title: "协调器ID", width: "10%"},
+                    {key: 2, field: "link_status", title: "数量", width: "10%"},
+                    {key: 3, field: "adc_main", title: "电量", width: "15%"},
+                    {key: 4, field: "temper_main", title: "温度", width: "15%"},
+                    {key: 5, field: "start_time", title: "开机时间", width: "25%"},
+                    {key: 6, field: "event_time", title: "关机时间", width: "25%"}
                 ],
                 tableData: [],
                 tablePage: {
@@ -77,6 +78,8 @@
                     tweets.forEach((obj)=> {
                         obj.temper_main = obj.temper_main ? (obj.temper_main.toFixed(1) + '℃') : null;
                         obj.event_time = obj.event_time.slice(0, obj.event_time.length-5).replace("T", " ");
+                        obj.start_time = obj.start_time.slice(0, obj.start_time.length-5).replace("T", " ");
+                        obj.link_status = obj.link_status.split(" ").reduce((pre, cur)=> Number(pre)+Number(cur));
                     });
                     this.tableData = tweets;
                     this.loading = false;
@@ -104,6 +107,8 @@
                 tweets.forEach((obj)=> {
                     obj.temper_main = obj.temper_main ? (obj.temper_main.toFixed(1) + '℃') : null;
                     obj.event_time = obj.event_time.slice(0, obj.event_time.length-5).replace("T", " ");
+                    obj.start_time = obj.start_time.slice(0, obj.start_time.length-5).replace("T", " ");
+                    obj.link_status = obj.link_status.split(" ").reduce((pre, cur)=> Number(pre)+Number(cur));
                 })
                 this.tableData = tweets;
                 this.loading = false;
@@ -119,6 +124,8 @@
                     tweets.forEach((obj)=> {
                         obj.temper_main = obj.temper_main ? (obj.temper_main.toFixed(1) + '℃') : null;
                         obj.event_time = obj.event_time.slice(0, obj.event_time.length-5).replace("T", " ");
+                        obj.start_time = obj.start_time.slice(0, obj.start_time.length-5).replace("T", " ");
+                        obj.link_status = obj.link_status.split(" ").reduce((pre, cur)=> Number(pre)+Number(cur));
                     })
                     this.tableData = tweets;
                     this.loading = false;

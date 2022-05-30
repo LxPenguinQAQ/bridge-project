@@ -37,7 +37,7 @@ exports.getAccountByUsername = function(username, callback) {
 
 //通过列表单行ID来查看Tweet表格中的多个数据
 exports.getSearchSingleTweets = function(id, callback) {
-	const sql = `SELECT sensordata FROM sensor WHERE sensor_id = '${id}';`;
+	const sql = `SELECT sensordata, sensor_id FROM sensor WHERE sensor_id = '${id}';`;
 	console.log(sql);
 	database.query(sql, (err, data)=> {
 		callback(err, data);
@@ -46,7 +46,7 @@ exports.getSearchSingleTweets = function(id, callback) {
 
 //通过ID获取Tweet表格中一段时间内的的数据
 exports.getTweetsForPicByTime = function(matchId, startTime, endTime, callback) {
-	const sql = `SELECT read_time, amplitude, frequency, adc_sensor bridge_id FROM sensor WHERE macaddress = '${matchId}' AND read_time BETWEEN '${startTime}' AND '${endTime}';`;
+	const sql = `SELECT read_time, amplitude, frequency, adc_sensor, bridge_id FROM sensor WHERE macaddress = '${matchId}' AND read_time BETWEEN '${startTime}' AND '${endTime}';`;
 	console.log(sql);
 	database.query(sql, (err, data)=> {
 		callback(err, data);
@@ -109,9 +109,19 @@ exports.getCoordinatorInfo = function(callback) {
 
 // 获取协调器数据
 exports.getCoordinatorTweets = function(matchId, currentPage, pageSize, callback) {
-	const sql = `SELECT * FROM router WHERE id_main = ${matchId} ORDER BY router_id DESC LIMIT ${(currentPage-1)*pageSize}, ${pageSize}`;
+	const sql = `SELECT * FROM router WHERE id_main = ${matchId} AND event_type = 'stop' ORDER BY router_id DESC LIMIT ${(currentPage-1)*pageSize}, ${pageSize}`;
 	console.log(sql);
-	database.query(sql, (err, data)=> {
+	database.query(sql, async (err, data)=> {
+		if (!err && data.length !== 0) {
+			for(let i=0; i<data.length; i++) {
+				const sql = `SELECT * FROM router WHERE id_main = ${matchId} AND event_type = 'start' AND event_time < '${data[i].event_time.Format("yy-MM-dd hh:mm:ss")}' ORDER BY router_id DESC LIMIT 0, 1;`
+				console.log(sql);
+				const temp = await query(sql);
+				data[i].adc_main = temp[0].adc_main;
+				data[i].temper_main = temp[0].temper_main;
+				data[i].start_time = temp[0].event_time;
+			}
+		}
 		callback(err, data);
 	})
 }

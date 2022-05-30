@@ -22,7 +22,7 @@
                         <MyButton v-for="obj in coordinatorData" :address="obj.router_id" :ref="obj.router_id" :key="obj.id" type="coordinator" matchId=""/>
                     </div>
 
-                    <div v-for="arr of matchArr" :id="'classification:' + arr[0].CLASSIFICATION" :key="arr[0].bridge_id" class="btnPart">
+                    <div v-for="arr of matchArr" :key="arr[0].id" class="btnPart">
                         <h1>bridge_id:{{arr[0].installAddress | addressSlice}}</h1>
                         <MyButton v-for="obj of arr" :matchId="obj.macaddress" :address="obj.installAddress" :ref="obj.macaddress" :key="obj.id" type="node"/>
                     </div>
@@ -112,24 +112,11 @@
         computed: {
             // 依据installAddress进行分类得到所有位置种类的CLASSICFICATION数组
             classificationArr() {
-                // let arr = []
-                // this.matchData.forEach((obj)=> {
-                //     if (arr.indexOf(obj.CLASSIFICATION) < 0 || arr.length == 0) {
-                //         arr.push(obj.CLASSIFICATION)
-                //     }
-                // })
-                // return arr.sort()
                 let arr = [];
                 this.matchData.forEach(obj=> {
                     const temp = obj.installAddress.split("-");
-                    if (temp.length === 2) {
-                        if (arr.indexOf(temp[0]) < 0 || arr.length.length === 0) {
-                            arr.push(temp[0]);
-                        }
-                    } else {
-                        if (arr.indexOf(temp[1]) < 0 || arr.length.length === 0) {
-                            arr.push(temp[1]);
-                        }
+                    if (!arr.includes(temp[0])) {
+                        arr.push(temp[0]);
                     }
                 })
                 return arr.sort((a, b)=> Number(a) - Number(b));
@@ -141,14 +128,8 @@
                 this.classificationArr.forEach((num)=> {
                     this.matchData.forEach((obj)=> {
                         const temp = obj.installAddress.split("-");
-                        if (temp.length === 2) {
-                            if (temp[0] === num) {
-                                arr.push(obj);
-                            }
-                        } else {
-                            if (temp[1] === num) {
-                                arr.push(obj);
-                            }        
+                        if (temp[0] === num) {
+                            arr.push(obj);
                         }
                     })
                     // 给arr进行降序，arr存储节点数据
@@ -316,7 +297,7 @@
                     this.$refs[this.matchIdArr[i]][0].state = 0;
                 }
                 for (let i=0; i<tweets.length; i++) {
-                    if (this.$refs[tweets[i].macaddress][0]) {
+                    if (this.matchIdArr.includes(tweets[i].macaddress)) {
                         if (tweets[i].amplitude > this.alarmThreshold1) {
                             this.$refs[tweets[i].macaddress][0].state = 1;
                         } else if (tweets[i].amplitude > this.alarmThreshold2) {
@@ -333,7 +314,7 @@
             })
         },
         mounted() {
-            console.log(this.$refs)
+            
         },
         watch: {
             form: {
@@ -366,7 +347,7 @@
                             this.$refs[this.matchIdArr[i]][0].state = 0;
                         }
                         for (let i=0; i<tweets.length; i++) {
-                            if (this.$refs[tweets[i].macaddress][0]) {
+                            if (this.matchIdArr.includes(tweets[i].macaddress)) {
                                 if (tweets[i].amplitude > this.alarmThreshold1) {
                                     this.$refs[tweets[i].macaddress][0].state = 1;
                                 } else if (tweets[i].amplitude > this.alarmThreshold2) {
@@ -393,10 +374,7 @@
                         this.$refs[this.matchIdArr[i]][0].state = 0;
                     }
                     for (let i=0; i<tweets.length; i++) {
-                        if (tweets[i].bridge_id === "25-03") {
-                            console.log(tweets[i].macaddress)
-                        }
-                        if (this.$refs[tweets[i].macaddress][0]) {
+                        if (this.matchIdArr.includes(tweets[i].macaddress)) {
                             if (tweets[i].amplitude > this.alarmThreshold1) {
                                 this.$refs[tweets[i].macaddress][0].state = 1;
                             } else if (tweets[i].amplitude > this.alarmThreshold2) {

@@ -3,7 +3,7 @@ import _this from "@/main.js"
 
 const myAxios = axios.create({
     baseURL: process.env.VUE_APP_BASE_API,
-    timeout: 20000,
+    timeout: 50000,
     // headers: {
     //     "Content-Type": "application/x-www-form-urlencoded"
     // },
@@ -27,7 +27,13 @@ myAxios.interceptors.response.use(res=>{
     if (res.data.status) _this.$Message.success(res.data.msg);
     return res.data;
 }, err=> {
-    _this.$Message.error(err.response.data.msg);
+    if (err.response?.statusText === "Unauthorized") {
+        _this.$Message.error("token expired, please login again");
+        localStorage.removeItem("Token"); 
+        _this.$router.replace("/");
+    } else {
+        _this.$Message.error(err.response.data.msg);
+    }
 })
 
 export default myAxios;

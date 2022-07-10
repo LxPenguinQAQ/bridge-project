@@ -15,7 +15,7 @@ const jwtAuth = expressJwt({
     CredentialsRequired: false,
     algorithms: ['HS256']
 }).unless({
-    path: ["/login", "/accounts/createAccount", "/tweets/test"]
+    path: ["/home", "/login"]
 })
 
 module.exports = {jwtAuth, createToken};

@@ -150,16 +150,21 @@ export const getAllTweets = function(currentPage, pageSize, callback) {
 }
 
 // 测试用post
-export const test = function(start, end, callback) {
-	// myAxios.post("temp/getData", {
-	// 	start,
-	// 	end
-	// }).then(res=> {
-	// 	callback(res);
-	// })
-	myAxios.post("temp/getData", {
-		start,
-		end
+export const test = function(matchId, callback) {
+	myAxios.get("test", {
+		params: {
+			matchId
+		}
+	}).then(res=> {
+		callback(res);
+	})
+}
+
+// 查询一个工作周期的数据
+export const getWorkData = function(matchId, startTime, endTime, callback) {
+	myAxios.post(`tweets/getWorkData?matchId=${matchId}`, {
+		startTime,
+		endTime
 	}).then(res=> {
 		callback(res);
 	})

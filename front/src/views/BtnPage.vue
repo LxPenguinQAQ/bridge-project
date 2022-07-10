@@ -5,25 +5,26 @@
             <el-aside width="200px">
                 <div class="info">
                     <h2>用户名:&nbsp;{{user}}</h2>
-                    <icon  type="md-power" size="30" @click="logout" style="cursor: pointer;"/><br>
+                    <div id="logout"><icon type="md-power" size="30" @click="logout" class="icon"/></div><br>
                     <h3>协调器状态:<br>编号:{{" "+num+' 号'}}<br>电量:{{" "+electricity+' V'}}<br>温度:{{" "+temper+' °C'}}</h3>
                     <p style="text-align: center; margin-top: 20px;">
                         <button @click="dialog=true;" class="settingBtn">设置</button>
                         <button @click="showAllTweets" class="settingBtn">全部数据</button>
+                        <button @click="test" class="settingBtn">测试用接口</button>
                     </p>
                 </div>
             </el-aside>
             <!-- 按钮展示界面 -->
             <el-container>
-                <el-main>
+                <el-main ref="main">
                     <div class="coordinatorPart">
                         <h1>协调器</h1>
                         <MyButton v-for="obj in coordinatorData" :address="obj.router_id" :ref="obj.router_id" :key="obj.id" type="coordinator" matchId=""/>
                     </div>
 
-                    <div v-for="arr of matchArr" :id="'classification:' + arr[0].CLASSIFICATION" :key="arr[0].macaddress" class="btnPart">
-                        <h1>classification:{{arr[0].installAddress | addressSlice}}</h1>
-                        <MyButton v-for="obj of arr" :matchId="obj.macaddress" :address="obj.installAddress" :ref="obj.macaddress" :key="obj.id" type="node"/>
+                    <div v-for="arr of matchArr" :key="arr[0].id" class="btnPart">
+                        <h1>bridge_id:{{arr[0].installAddress | addressSlice}}</h1>
+                        <MyButton v-for="obj of arr" :matchId="obj.macaddress" :address="obj.installAddress" :ref="obj.installAddress" :key="obj.id" type="node"/>
                     </div>
                 </el-main>
             </el-container>
@@ -49,13 +50,15 @@
                         <el-input v-model.number="form.alarmThreshold3" autocomplete="off" style="width: 50%;"></el-input>
                     </el-form-item>
                     <h2>子节点mac地址配置</h2>
-                    <el-form-item label="阻尼器编号" style="margin-top: 20px">
-                        <el-select v-model="form.selector">
+                    <label>阻尼器编号</label>
+                    <el-form-item style="margin-top: 20px">
+                        <el-select v-model="form.selector" style="width: 45%;">
                             <p v-for="(arr, index) in matchArr" :key="index"><el-option v-for="(obj, index) in arr" :label="obj.installAddress" :value="obj.installAddress" :key="index"></el-option></p>
                         </el-select>
                     </el-form-item>
-                    <el-form-item label="子字节mac地址:" style="margin-top: 20px">
-                        <el-input v-model="macaddress" autocomplete="off" style="width: 50%;" ></el-input>
+                    <label>子字节mac地址</label>
+                    <el-form-item style="margin-top: 20px">
+                        <el-input v-model="macaddress" autocomplete="off" style="width: 45%;" ></el-input>
                     </el-form-item>
                 </el-form>
                 <div class="demo-drawer__footer" style="margin-left: 35%; margin-right: 35%; margin-top: 20%">
@@ -85,9 +88,9 @@
                 electricity: "--",
                 temper: "--",
                 // 报警阀值
-                alarmThreshold1: localStorage.getItem("alarmThreshold1") || 150,   
-				alarmThreshold2: localStorage.getItem("alarmThreshold2") || 100,
-				alarmThreshold3: localStorage.getItem("alarmThreshold3") || 70,
+                alarmThreshold1: Number(localStorage.getItem("alarmThreshold1")) || 150,   
+				alarmThreshold2: Number(localStorage.getItem("alarmThreshold2")) || 100,
+				alarmThreshold3: Number(localStorage.getItem("alarmThreshold3")) || 70,
                 // 设置页面中显示
                 form: {
                     alarmThreshold1: 0,
@@ -103,49 +106,48 @@
                 // 协调器信息数据
                 coordinatorData: [],
                 refresh: true,
-                timer_1: null
+                timer_1: null,
+                // 判断是否获取按钮状态
+                judgeGetStatus: true,
             }
         },
         computed: {
             // 依据installAddress进行分类得到所有位置种类的CLASSICFICATION数组
             classificationArr() {
-                // let arr = []
-                // this.matchData.forEach((obj)=> {
-                //     if (arr.indexOf(obj.CLASSIFICATION) < 0 || arr.length == 0) {
-                //         arr.push(obj.CLASSIFICATION)
-                //     }
-                // })
-                // return arr.sort()
                 let arr = [];
                 this.matchData.forEach(obj=> {
                     const temp = obj.installAddress.split("-");
-                    if (temp.length === 2) {
-                        if (arr.indexOf(temp[0]) < 0 || arr.length.length === 0) {
-                            arr.push(temp[0]);
-                        }
-                    } else {
-                        if (arr.indexOf(temp[1]) < 0 || arr.length.length === 0) {
-                            arr.push(temp[1]);
-                        }
+                    temp.pop();
+                    const className = temp.join("-")
+                    if (!arr.includes(className)) {
+                        arr.push(className);
                     }
                 })
-                return arr.sort((a, b)=> Number(a) - Number(b));
+                // 排序顺序为升序，先比较第一项数字，再比较第二项字母，再比较第三项字母
+                return arr.sort((a, b)=> {
+                    let num1, w1_1, w1_2, num2, w2_1, w2_2;
+                    [num1, w1_1, w1_2] = a.split("-");
+                    [num2, w2_1, w2_2] = b.split("-");
+                    if (num1 !== num2) {
+                        return num1 - num2;
+                    } else if (w1_1 !== w1_2) {
+                        return w1_2.charCodeAt() - w1_1.charCodeAt();
+                    } else {
+                        return w2_2.charCodeAt() - w2_1.charCodeAt();
+                    }
+                });
             },
             // 按照classification编号分类形成数组后组合的大数组
             matchArr() {
                 let arrTotal = [];
                 let arr = [];
-                this.classificationArr.forEach((num)=> {
+                this.classificationArr.forEach((str)=> {
                     this.matchData.forEach((obj)=> {
                         const temp = obj.installAddress.split("-");
-                        if (temp.length === 2) {
-                            if (temp[0] === num) {
-                                arr.push(obj);
-                            }
-                        } else {
-                            if (temp[1] === num) {
-                                arr.push(obj);
-                            }        
+                        temp.pop();
+                        const className = temp.join("-")
+                        if (className === str) {
+                            arr.push(obj);
                         }
                     })
                     // 给arr进行降序，arr存储节点数据
@@ -257,6 +259,7 @@
                 this.loading = false;
                 this.dialog = false;
                 this.alertMacaddress = false;
+                this.alertDialog = false;
                 // 当未确认退出时候，同步form和实际的阀值
                 this.form.alarmThreshold1 = this.alarmThreshold1;
                 this.form.alarmThreshold2 = this.alarmThreshold2;
@@ -270,6 +273,11 @@
             // 显示所有数据
             showAllTweets() {
                 this.$router.push({path:'NodeTablePage', query: {matchId: "all"}});
+            },
+
+            // 测试用接口
+            test() {
+                this.$router.push("/Temp");
             }
         },
         created() {
@@ -301,30 +309,35 @@
                     return m - n;
                 })
             })
-
-            client.getNodeStatus((tweets)=> {
-                for (let i=0; i<this.matchIdArr.length; i++) {
-                    this.$refs[this.matchIdArr[i]][0].state = 0;
-                }
-                for (let i=0; i<tweets.length; i++) {
-                    if (this.$refs[tweets[i].macaddress][0]) {
-                        if (tweets[i].amplitude > this.alarmThreshold1) {
-                            this.$refs[tweets[i].macaddress][0].state = 1;
-                        } else if (tweets[i].amplitude > this.alarmThreshold2) {
-                            this.$refs[tweets[i].macaddress][0].state = 2;
-                        } else if (tweets[i].amplitude > this.alarmThreshold3) {
-                            this.$refs[tweets[i].macaddress][0].state = 3;
-                        } else if (tweets[i].amplitude > -1) {
-                            this.$refs[tweets[i].macaddress][0].state = 4;
-                        } else {
-                            this.$refs[tweets[i].macaddress][0].state = 0;
+            if (this.judgeGetStatus) {
+                this.judgeGetStatus = false;
+                client.getNodeStatus((tweets)=> {
+                    for (let i=0; i<this.matchData.length; i++) {
+                        this.$refs[this.matchData[i].installAddress][0].state=0;
+                    }
+                    for (let i=0; i<tweets.length; i++) {
+                        if (this.$refs[tweets[i].bridge_id]) {
+                            if (tweets[i].amplitude > this.alarmThreshold1) {
+                                this.$refs[tweets[i].bridge_id][0].state = 1;
+                            } else if (tweets[i].amplitude > this.alarmThreshold2) {
+                                this.$refs[tweets[i].bridge_id][0].state = 2;
+                            } else if (tweets[i].amplitude > this.alarmThreshold3) {
+                                this.$refs[tweets[i].bridge_id][0].state = 3;
+                            } else if (tweets[i].amplitude > -1) {
+                                this.$refs[tweets[i].bridge_id][0].state = 4;
+                            } else {
+                                this.$refs[tweets[i].bridge_id][0].state = 0;
+                            }
                         }
                     }
-                }
-            })
+                    this.judgeGetStatus = true;
+                })
+            } else {
+                console.log("上次getNodeStatus请求未响应");
+            }
         },
         mounted() {
-            console.log(this.$refs)
+            
         },
         watch: {
             form: {
@@ -350,58 +363,65 @@
             // refresh变化时更新matchData、classificationArr、matchArr、matchIdArr
             refresh() {
                 // 从数据库获取的位置 mac地址 所属协调器信息
-                client.getMatchData((matchData)=> {
-                    this.matchData = matchData;
+                if (this.judgeGetStatus) {
+                    this.judgeGetStatus = false;
                     client.getNodeStatus((tweets)=> {
-                        for (let i=0; i<this.matchIdArr.length; i++) {
-                            this.$refs[this.matchIdArr[i]][0].state = 0;
+                        for (let i=0; i<this.matchData.length; i++) {
+                            this.$refs[this.matchData[i].installAddress][0].state=0;
                         }
                         for (let i=0; i<tweets.length; i++) {
-                            if (this.$refs[tweets[i].macaddress][0]) {
+                            if (this.$refs[tweets[i].bridge_id]) {
                                 if (tweets[i].amplitude > this.alarmThreshold1) {
-                                    this.$refs[tweets[i].macaddress][0].state = 1;
+                                    this.$refs[tweets[i].bridge_id][0].state = 1;
                                 } else if (tweets[i].amplitude > this.alarmThreshold2) {
-                                    this.$refs[tweets[i].macaddress][0].state = 2;
+                                    this.$refs[tweets[i].bridge_id][0].state = 2;
                                 } else if (tweets[i].amplitude > this.alarmThreshold3) {
-                                    this.$refs[tweets[i].macaddress][0].state = 3;
+                                    this.$refs[tweets[i].bridge_id][0].state = 3;
                                 } else if (tweets[i].amplitude > -1) {
-                                    this.$refs[tweets[i].macaddress][0].state = 4;
+                                    this.$refs[tweets[i].bridge_id][0].state = 4;
                                 } else {
-                                    this.$refs[tweets[i].macaddress][0].state = 0;
+                                    this.$refs[tweets[i].bridge_id][0].state = 0;
                                 }
                             }
                         }
+                        this.judgeGetStatus = true;
                     })
-                })
-            }
+                } else {
+                    console.log("上次getNodeStatus请求未响应");
+                }
+            },
         },
         activated() {
             console.log("BtnPage组件激活,定时器启动");
+            console.log(this.$refs["29-01 "])
             this.timer_1 = setInterval(()=> {
                 // 根据数据库信息判断按钮颜色
-                client.getNodeStatus((tweets)=> {
-                    for (let i=0; i<this.matchIdArr.length; i++) {
-                        this.$refs[this.matchIdArr[i]][0].state = 0;
-                    }
-                    for (let i=0; i<tweets.length; i++) {
-                        if (tweets[i].bridge_id === "25-03") {
-                            console.log(tweets[i].macaddress)
+                if (this.judgeGetStatus) {
+                    this.judgeGetStatus = false;
+                    client.getNodeStatus((tweets=[])=> {
+                        for (let i=0; i<this.matchData.length; i++) {
+                            this.$refs[this.matchData[i].installAddress][0].state=0;
                         }
-                        if (this.$refs[tweets[i].macaddress][0]) {
-                            if (tweets[i].amplitude > this.alarmThreshold1) {
-                                this.$refs[tweets[i].macaddress][0].state = 1;
-                            } else if (tweets[i].amplitude > this.alarmThreshold2) {
-                                this.$refs[tweets[i].macaddress][0].state = 2;
-                            } else if (tweets[i].amplitude > this.alarmThreshold3) {
-                                this.$refs[tweets[i].macaddress][0].state = 3;
-                            } else if (tweets[i].amplitude > -1) {
-                                this.$refs[tweets[i].macaddress][0].state = 4;
-                            } else {
-                                this.$refs[tweets[i].macaddress][0].state = 0;
+                        for (let i=0; i<tweets.length; i++) {
+                            if (this.$refs[tweets[i].bridge_id]) {
+                                if (tweets[i].amplitude > this.alarmThreshold1) {
+                                    this.$refs[tweets[i].bridge_id][0].state = 1;
+                                } else if (tweets[i].amplitude > this.alarmThreshold2) {
+                                    this.$refs[tweets[i].bridge_id][0].state = 2;
+                                } else if (tweets[i].amplitude > this.alarmThreshold3) {
+                                    this.$refs[tweets[i].bridge_id][0].state = 3;
+                                } else if (tweets[i].amplitude > -1) {
+                                    this.$refs[tweets[i].bridge_id][0].state = 4;
+                                } else {
+                                    this.$refs[tweets[i].bridge_id][0].state = 0;
+                                }
                             }
                         }
-                    }
-                })
+                        this.judgeGetStatus = true;
+                    })
+                } else {
+                    console.log("上次getNodeStatus请求未响应");
+                }
             }, 1000)
         },
         deactivated() {
@@ -422,7 +442,7 @@
     }
 
     .el-header, .el-footer {
-        background-color: #B3C0D1;
+        /* background-color: #B3C0D1; */
         color: #333;
         text-align: center;
         line-height: 60px;
@@ -431,22 +451,20 @@
     }
 
     .el-aside {
-        background-color: #D3DCE6;
+        /* background-color: #D3DCE6; */
         color: #333;
         text-align: center;
         line-height: 30px;
+        border: 2px groove pink;
     }
 
     .el-main {
-        background-color: #E9EEF3;
+        /* background-color: #E9EEF3; */
+        background-color: transparent;
         color: #333;
         text-align: center;
         line-height: 50px;
     }
-
-    /* body > .el-container {
-        
-    } */
 
     .el-container:nth-child(5) .el-aside,
     .el-container:nth-child(6) .el-aside {
@@ -469,6 +487,10 @@
         margin: auto;
         margin-top: 10px;
         border: 2px groove blue; 
+    }
+
+    div.demo-drawer__content {
+        text-align: center;
     }
 
     /* 设置按钮样式 */
@@ -495,9 +517,22 @@
         display: flex;
         justify-content: center;
     }
+    div#logout {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        /* border: 2px solid gray; */
+        position: relative;
+    }
+    .icon {
+        cursor: pointer;
+        position: absolute;
+        top: 5px;
+        right: 5px;
 
-    el-form {
-        display: flex;
-        justify-content: center;
+    }
+    div#logout:hover {
+        background-color: rgba(96, 96, 96, 0.2);
     }
 </style>

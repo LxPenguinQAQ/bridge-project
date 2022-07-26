@@ -160,4 +160,14 @@ export const test = function(matchId, callback) {
 	})
 }
 
+// 查询一个工作周期的数据
+export const getWorkData = function(matchId, startTime, endTime, callback) {
+	myAxios.post(`tweets/getWorkData?matchId=${matchId}`, {
+		startTime,
+		endTime
+	}).then(res=> {
+		callback(res);
+	})
+}
+
 

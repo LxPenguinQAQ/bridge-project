@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import _this from '../main'
 
 Vue.use(VueRouter)
 
@@ -9,11 +8,12 @@ function resolveView(view) {
 	return () => import(`@/views/${view}`)
 }
 
-const routes = [{
+const routes = [
+	{
 		path: '/',
 		name: 'home',
-		component: resolveView('Home')
-	}, 
+		component: resolveView('Home'),
+	},
 	{
 		path: '/Register',
 		name: 'register',
@@ -43,11 +43,16 @@ const routes = [{
 		path: '/Temp',
 		name: 'temp',
 		component: resolveView('Temp')
+	},
+	{
+		path: '/Star',
+		name: 'star',
+		component: resolveView('Star')
 	}
 ]
 
 const router = new VueRouter({
-	mode: 'hash',
+	mode: 'history',
 	base: process.env.BASE_URL,
 	routes
 })
@@ -60,7 +65,7 @@ router.beforeEach(({name}, from, next)=> {
 		if (localStorage.getItem('Token')) {
 			next();
 		} else {
-			_this.$Message.info("please login")
+			new Vue().$Message.info("please login")
 			next('/');
 		}
 	}

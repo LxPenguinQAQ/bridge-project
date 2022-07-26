@@ -16,7 +16,7 @@
             </el-aside>
             <!-- 按钮展示界面 -->
             <el-container>
-                <el-main>
+                <el-main ref="main">
                     <div class="coordinatorPart">
                         <h1>协调器</h1>
                         <MyButton v-for="obj in coordinatorData" :address="obj.router_id" :ref="obj.router_id" :key="obj.id" type="coordinator" matchId=""/>
@@ -24,7 +24,7 @@
 
                     <div v-for="arr of matchArr" :key="arr[0].id" class="btnPart">
                         <h1>bridge_id:{{arr[0].installAddress | addressSlice}}</h1>
-                        <MyButton v-for="obj of arr" :matchId="obj.macaddress" :address="obj.installAddress" :ref="obj.macaddress" :key="obj.id" type="node"/>
+                        <MyButton v-for="obj of arr" :matchId="obj.macaddress" :address="obj.installAddress" :ref="obj.installAddress" :key="obj.id" type="node"/>
                     </div>
                 </el-main>
             </el-container>
@@ -106,7 +106,15 @@
                 // 协调器信息数据
                 coordinatorData: [],
                 refresh: true,
-                timer_1: null
+                timer_1: null,
+                // 判断是否获取按钮状态
+                judgeGetStatus: true,
+                // 存放红色按钮
+                alertList: [],
+                // 音频对象
+                alertSound: new Audio('./alertSound.mp3'),
+                alertInterval: null,
+                judgeAlertSound: true,
             }
         },
         computed: {
@@ -115,20 +123,36 @@
                 let arr = [];
                 this.matchData.forEach(obj=> {
                     const temp = obj.installAddress.split("-");
-                    if (!arr.includes(temp[0])) {
-                        arr.push(temp[0]);
+                    temp.pop();
+                    const className = temp.join("-")
+                    if (!arr.includes(className)) {
+                        arr.push(className);
                     }
                 })
-                return arr.sort((a, b)=> Number(a) - Number(b));
+                // 排序顺序为升序，先比较第一项数字，再比较第二项字母，再比较第三项字母
+                return arr.sort((a, b)=> {
+                    let num1, w1_1, w1_2, num2, w2_1, w2_2;
+                    [num1, w1_1, w1_2] = a.split("-");
+                    [num2, w2_1, w2_2] = b.split("-");
+                    if (num1 !== num2) {
+                        return num1 - num2;
+                    } else if (w1_1 !== w1_2) {
+                        return w1_2.charCodeAt() - w1_1.charCodeAt();
+                    } else {
+                        return w2_2.charCodeAt() - w2_1.charCodeAt();
+                    }
+                });
             },
             // 按照classification编号分类形成数组后组合的大数组
             matchArr() {
                 let arrTotal = [];
                 let arr = [];
-                this.classificationArr.forEach((num)=> {
+                this.classificationArr.forEach((str)=> {
                     this.matchData.forEach((obj)=> {
                         const temp = obj.installAddress.split("-");
-                        if (temp[0] === num) {
+                        temp.pop();
+                        const className = temp.join("-")
+                        if (className === str) {
                             arr.push(obj);
                         }
                     })
@@ -153,7 +177,8 @@
                     })
                 })
                 return matchIdArr
-            },        
+            },
+
         },
         components: {MyButton},
         methods: {
@@ -260,9 +285,18 @@
             // 测试用接口
             test() {
                 this.$router.push("/Temp");
+            },
+
+            // 关闭警报
+            closeAlertSound() {
+                this.judgeAlertSound = false;
+                clearInterval(this.alertInterval);
+                this.alertSound.pause();
+                this.alertSound.src = './alertSound.mp3';
             }
         },
         created() {
+            this.alertSound.loop = true;
             // 将form中报警阀值同步
             this.form.alarmThreshold1 = this.alarmThreshold1;
             this.form.alarmThreshold2 = this.alarmThreshold2;
@@ -291,30 +325,43 @@
                     return m - n;
                 })
             })
-
-            client.getNodeStatus((tweets)=> {
-                for (let i=0; i<this.matchIdArr.length; i++) {
-                    this.$refs[this.matchIdArr[i]][0].state = 0;
-                }
-                for (let i=0; i<tweets.length; i++) {
-                    if (this.matchIdArr.includes(tweets[i].macaddress)) {
-                        if (tweets[i].amplitude > this.alarmThreshold1) {
-                            this.$refs[tweets[i].macaddress][0].state = 1;
-                        } else if (tweets[i].amplitude > this.alarmThreshold2) {
-                            this.$refs[tweets[i].macaddress][0].state = 2;
-                        } else if (tweets[i].amplitude > this.alarmThreshold3) {
-                            this.$refs[tweets[i].macaddress][0].state = 3;
-                        } else if (tweets[i].amplitude > -1) {
-                            this.$refs[tweets[i].macaddress][0].state = 4;
-                        } else {
-                            this.$refs[tweets[i].macaddress][0].state = 0;
+            if (this.judgeGetStatus) {
+                this.judgeGetStatus = false;
+                client.getNodeStatus((tweets)=> {
+                    for (let i=0; i<this.matchData.length; i++) {
+                        this.$refs[this.matchData[i].installAddress][0].state=0;
+                    }
+                    const alertList = [];
+                    for (let i=0; i<tweets.length; i++) {
+                        if (this.$refs[tweets[i].bridge_id]) {
+                            if (tweets[i].amplitude > this.alarmThreshold1) {
+                                this.$refs[tweets[i].bridge_id][0].state = 1;
+                                const obj = {
+                                    bridge_id: tweets[i].bridge_id,
+                                    ref: this.$refs[tweets[i].bridge_id][0],
+                                    amplitude: tweets[i].amplitude
+                                };
+                                alertList.push(obj);
+                            } else if (tweets[i].amplitude > this.alarmThreshold2) {
+                                this.$refs[tweets[i].bridge_id][0].state = 2;
+                            } else if (tweets[i].amplitude > this.alarmThreshold3) {
+                                this.$refs[tweets[i].bridge_id][0].state = 3;
+                            } else if (tweets[i].amplitude > -1) {
+                                this.$refs[tweets[i].bridge_id][0].state = 4;
+                            } else {
+                                this.$refs[tweets[i].bridge_id][0].state = 0;
+                            }
                         }
                     }
-                }
-            })
+                    this.judgeGetStatus = true;
+                    this.alertList = alertList;
+                })
+            } else {
+                console.log("上次getNodeStatus请求未响应");
+            }
         },
         mounted() {
-            
+
         },
         watch: {
             form: {
@@ -340,55 +387,114 @@
             // refresh变化时更新matchData、classificationArr、matchArr、matchIdArr
             refresh() {
                 // 从数据库获取的位置 mac地址 所属协调器信息
-                client.getMatchData((matchData)=> {
-                    this.matchData = matchData;
+                if (this.judgeGetStatus) {
+                    this.judgeGetStatus = false;
                     client.getNodeStatus((tweets)=> {
-                        for (let i=0; i<this.matchIdArr.length; i++) {
-                            this.$refs[this.matchIdArr[i]][0].state = 0;
+                        for (let i=0; i<this.matchData.length; i++) {
+                            this.$refs[this.matchData[i].installAddress][0].state=0;
                         }
+                        const alertList = [];
                         for (let i=0; i<tweets.length; i++) {
-                            if (this.matchIdArr.includes(tweets[i].macaddress)) {
+                            if (this.$refs[tweets[i].bridge_id]) {
                                 if (tweets[i].amplitude > this.alarmThreshold1) {
-                                    this.$refs[tweets[i].macaddress][0].state = 1;
+                                    this.$refs[tweets[i].bridge_id][0].state = 1;
+                                    const obj = {
+                                        bridge_id: tweets[i].bridge_id,
+                                        ref: this.$refs[tweets[i].bridge_id][0],
+                                        amplitude: tweets[i].amplitude
+                                    };
+                                    alertList.push(obj);
                                 } else if (tweets[i].amplitude > this.alarmThreshold2) {
-                                    this.$refs[tweets[i].macaddress][0].state = 2;
+                                    this.$refs[tweets[i].bridge_id][0].state = 2;
                                 } else if (tweets[i].amplitude > this.alarmThreshold3) {
-                                    this.$refs[tweets[i].macaddress][0].state = 3;
+                                    this.$refs[tweets[i].bridge_id][0].state = 3;
                                 } else if (tweets[i].amplitude > -1) {
-                                    this.$refs[tweets[i].macaddress][0].state = 4;
+                                    this.$refs[tweets[i].bridge_id][0].state = 4;
                                 } else {
-                                    this.$refs[tweets[i].macaddress][0].state = 0;
+                                    this.$refs[tweets[i].bridge_id][0].state = 0;
                                 }
                             }
                         }
+                        this.judgeGetStatus = true;
+                        this.alertList = alertList;
                     })
-                })
+                } else {
+                    console.log("上次getNodeStatus请求未响应");
+                }
+            },
+            alertList(newV, oldV) {
+                if (this.judgeAlertSound) {
+                    const judge_1 = Boolean(newV.length);
+                    const judge_2 = Boolean(oldV.length);
+                    if (judge_1 === judge_2) {
+                        return;
+                    } else if (judge_1) {
+                        this.$notify({
+                            title: '警告',
+                            message: '这是一条警告的提示消息',
+                            type: 'warning',
+                            duration: 0,
+                            onClose: this.closeAlertSound,
+
+                        });
+                        const func = ()=> {
+                            this.alertSound.play();
+                            setTimeout(()=> {
+                                this.alertSound.pause();
+                                this.alertSound.src = './alertSound.mp3';
+                            }, 30*1000);
+                            return func;
+                        }
+                        this.alertInterval = setInterval(func(), 5*60*1000);
+                    } else {
+                        this.alertSound.pause();
+                        this.alertSound.src = './alertSound.mp3';
+                        clearInterval(this.alertInterval);
+                    }
+                } else {
+                    return;
+                }
             }
         },
         activated() {
             console.log("BtnPage组件激活,定时器启动");
+            console.log(this.$refs["29-01 "])
             this.timer_1 = setInterval(()=> {
                 // 根据数据库信息判断按钮颜色
-                client.getNodeStatus((tweets)=> {
-                    for (let i=0; i<this.matchIdArr.length; i++) {
-                        this.$refs[this.matchIdArr[i]][0].state = 0;
-                    }
-                    for (let i=0; i<tweets.length; i++) {
-                        if (this.matchIdArr.includes(tweets[i].macaddress)) {
-                            if (tweets[i].amplitude > this.alarmThreshold1) {
-                                this.$refs[tweets[i].macaddress][0].state = 1;
-                            } else if (tweets[i].amplitude > this.alarmThreshold2) {
-                                this.$refs[tweets[i].macaddress][0].state = 2;
-                            } else if (tweets[i].amplitude > this.alarmThreshold3) {
-                                this.$refs[tweets[i].macaddress][0].state = 3;
-                            } else if (tweets[i].amplitude > -1) {
-                                this.$refs[tweets[i].macaddress][0].state = 4;
-                            } else {
-                                this.$refs[tweets[i].macaddress][0].state = 0;
+                if (this.judgeGetStatus) {
+                    this.judgeGetStatus = false;
+                    client.getNodeStatus((tweets=[])=> {
+                        for (let i=0; i<this.matchData.length; i++) {
+                            this.$refs[this.matchData[i].installAddress][0].state=0;
+                        }
+                        const alertList = [];
+                        for (let i=0; i<tweets.length; i++) {
+                            if (this.$refs[tweets[i].bridge_id]) {
+                                if (tweets[i].amplitude > this.alarmThreshold1) {
+                                    this.$refs[tweets[i].bridge_id][0].state = 1;
+                                    const obj = {
+                                        bridge_id: tweets[i].bridge_id,
+                                        ref: this.$refs[tweets[i].bridge_id][0],
+                                        amplitude: tweets[i].amplitude
+                                    };
+                                    alertList.push(obj);
+                                } else if (tweets[i].amplitude > this.alarmThreshold2) {
+                                    this.$refs[tweets[i].bridge_id][0].state = 2;
+                                } else if (tweets[i].amplitude > this.alarmThreshold3) {
+                                    this.$refs[tweets[i].bridge_id][0].state = 3;
+                                } else if (tweets[i].amplitude > -1) {
+                                    this.$refs[tweets[i].bridge_id][0].state = 4;
+                                } else {
+                                    this.$refs[tweets[i].bridge_id][0].state = 0;
+                                }
                             }
                         }
-                    }
-                })
+                        this.judgeGetStatus = true;
+                        this.alertList = alertList;
+                    })
+                } else {
+                    console.log("上次getNodeStatus请求未响应");
+                }
             }, 1000)
         },
         deactivated() {
@@ -409,7 +515,7 @@
     }
 
     .el-header, .el-footer {
-        background-color: #B3C0D1;
+        /* background-color: #B3C0D1; */
         color: #333;
         text-align: center;
         line-height: 60px;
@@ -418,14 +524,16 @@
     }
 
     .el-aside {
-        background-color: #D3DCE6;
+        /* background-color: #D3DCE6; */
         color: #333;
         text-align: center;
         line-height: 30px;
+        border: 2px groove pink;
     }
 
     .el-main {
-        background-color: #E9EEF3;
+        /* background-color: #E9EEF3; */
+        background-color: transparent;
         color: #333;
         text-align: center;
         line-height: 50px;

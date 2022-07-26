@@ -12,6 +12,7 @@
           ref="xTable"
           height="665" 
           :loading="loading"
+		  :cell-style="vxecellStyle"
           :column-config="{resizable: true, isCurrent: true, isHover: true}"
           :row-config="{isCurrent: true, isHover: true}"
           :data="tableData" style="font-size: 18px">
@@ -200,6 +201,7 @@
 				msgTime: null,
 				matchData: [],
 				macaddress: "",
+				dataMacaddress: "",
 				timer: null,
 				pickerOptions: {
                     shortcuts: [{
@@ -229,6 +231,9 @@
                     }]
                 },
                 timeArr: [],
+				vxecellStyle: {
+					background: 'transparent'
+				}
             }
         },
         computed: {
@@ -476,8 +481,9 @@
 
             // 翻页功能
             handlePageChange({ currentPage, pageSize }) {
-                this.tablePage.currentPage = currentPage
-                this.tablePage.pageSize = pageSize
+                this.tablePage.currentPage = currentPage;
+                this.tablePage.pageSize = pageSize;
+				this.loading = true;
 
 				if (this.matchId === "all") {
 					client.getAllTweets(this.tablePage.currentPage, this.tablePage.pageSize, (tweets)=> {
@@ -497,7 +503,7 @@
 						this.loading = false
 					})
 				} else {
-					client.getNodeTweets(this.matchId, this.tablePage.currentPage, this.tablePage.pageSize, (tweets)=> {
+					client.getNodeTweets(this.address, this.tablePage.currentPage, this.tablePage.pageSize, (tweets)=> {
 						this.tableData = this.formattweets(tweets)
 						this.loading = false
 					})
@@ -514,7 +520,7 @@
 				let frequency = []
 				let adc = []
 				this.globalVar1 = []	
-				client.getTweetsForPicByTime(this.matchId, startTime, endTime, (tweets) => {
+				client.getTweetsForPicByTime(this.address, startTime, endTime, (tweets) => {
 					for(var i = 0; i < tweets.length; i++) {
 						amplitude.push(tweets[i]["amplitude"])
 						frequency.push(tweets[i]["frequency"])
@@ -803,13 +809,13 @@
 				})
 			} else {
 				this.loading = true
-				client.getNodeTweets(this.matchId, this.tablePage.currentPage, this.tablePage.pageSize, (tweets)=> {
+				client.getNodeTweets(this.address, this.tablePage.currentPage, this.tablePage.pageSize, (tweets)=> {
 					this.tableData = this.formattweets(tweets)
 					this.loading = false
 				})
 
 				// 获取该matchId数据总数
-				client.getTotalNodeCount(this.matchId, (length)=> {
+				client.getTotalNodeCount(this.address, (length)=> {
 					this.tablePage.totalResult = length
 				})
 			}
@@ -839,13 +845,13 @@
 						this.tablePage.totalResult = length
 					})
 				} else {
-					client.getNodeTweets(this.matchId, this.tablePage.currentPage, this.tablePage.pageSize, (tweets)=> {
+					client.getNodeTweets(this.address, this.tablePage.currentPage, this.tablePage.pageSize, (tweets)=> {
 						this.tableData = this.formattweets(tweets)
 						this.loading = false
 					})
 
 					// 获取该matchId数据总数
-					client.getTotalNodeCount(this.matchId, (length)=> {
+					client.getTotalNodeCount(this.address, (length)=> {
 						this.tablePage.totalResult = length
 					})
 				}
@@ -862,6 +868,10 @@
 			this.tablePage.currentPage = 1
 			this.tablePage.pageSize = 10
 			this.tablePage.totalResult = 0
+
+			// 关闭弹窗
+			this.modal1 = false;
+			this.modal2 = false;
 		},
     }
 </script>
@@ -871,7 +881,7 @@
         width: 75%;
         height: auto;
         margin: auto;
-        margin-top: 25px;
+        padding-top: 25px;
     }
 
 	h2 {

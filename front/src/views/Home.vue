@@ -129,7 +129,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-image: url("../assets/background.png");
+    /* background-image: url("../assets/background.png"); */
     background-attachment: fixed;
     background-size: cover;
 

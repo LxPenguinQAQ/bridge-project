@@ -46,7 +46,11 @@ exports.getSearchSingleTweets = function(id, callback) {
 
 //通过ID获取Tweet表格中一段时间内的的数据
 exports.getTweetsForPicByTime = function(matchId, startTime, endTime, callback) {
+<<<<<<< HEAD
 	const sql = `SELECT read_time, amplitude, frequency, adc_sensor, bridge_id FROM sensor WHERE macaddress = '${matchId}' AND read_time BETWEEN '${startTime}' AND '${endTime}';`;
+=======
+	const sql = `SELECT read_time, amplitude, frequency, adc_sensor, bridge_id FROM sensor WHERE bridge_id = '${matchId}' AND read_time BETWEEN '${startTime}' AND '${endTime}';`;
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
 	console.log(sql);
 	database.query(sql, (err, data)=> {
 		callback(err, data);
@@ -64,8 +68,13 @@ exports.modifyMacAddress = function(installAddress, macAddress, callback) {
 
 // 获取最近的子节点数据（最近6小时）
 exports.getNodeStatus = function(callback) {
+<<<<<<< HEAD
 	const sql = `SELECT t.amplitude, t.macaddress, t.bridge_id FROM (SELECT macaddress,MAX(sensor_id) sensor_id FROM sensor GROUP BY macaddress) a  JOIN sensor t ON t.macaddress=a.macaddress AND t.sensor_id=a.sensor_id AND LENGTH(a.macaddress)<20 AND t.read_time BETWEEN DATE_SUB(NOW(), INTERVAL 6 HOUR) AND NOW();`;
 	console.log(sql);
+=======
+	const sql = `SELECT t.amplitude, t.macaddress, t.bridge_id FROM (SELECT macaddress,MAX(sensor_id) sensor_id FROM sensor GROUP BY macaddress) a  JOIN sensor t ON t.macaddress=a.macaddress AND t.sensor_id=a.sensor_id AND LENGTH(a.macaddress)<20 AND t.read_time>=DATE_SUB(NOW(), INTERVAL 3 HOUR);`;
+	// console.log(sql);
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
 	database.query(sql, (err, data)=> {
 		callback(err, data);
 	})
@@ -73,7 +82,11 @@ exports.getNodeStatus = function(callback) {
 
 // 通过matchId获取所有数据的个数
 exports.getTotalNodeCount = function(matchId, callback) {
+<<<<<<< HEAD
 	const sql = `SELECT COUNT(sensor_id) count FROM sensor WHERE macaddress = '${matchId}';`
+=======
+	const sql = `SELECT COUNT(sensor_id) count FROM sensor WHERE bridge_id = '${matchId}';`
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
 	console.log(sql);
 	database.query(sql, (err, data)=> {
 		callback(err, data[0].count);
@@ -82,7 +95,7 @@ exports.getTotalNodeCount = function(matchId, callback) {
 
 // 通过页数和页面数据量获取节点数据
 exports.getNodeTweets = function(matchId, currentPage, pageSize, callback) {
-	const sql = `SELECT sensor_id, read_time, bridge_id, macaddress, amplitude, frequency, adc_sensor FROM sensor WHERE macaddress = '${matchId}' ORDER BY sensor_id DESC LIMIT ${(currentPage-1)*pageSize}, ${pageSize};`;
+	const sql = `SELECT sensor_id, read_time, bridge_id, macaddress, amplitude, frequency, adc_sensor FROM sensor WHERE bridge_id = '${matchId}' ORDER BY sensor_id DESC LIMIT ${(currentPage-1)*pageSize}, ${pageSize};`;
 	console.log(sql);
 	database.query(sql, (err, data)=> {
 		callback(err, data);
@@ -109,7 +122,11 @@ exports.getCoordinatorInfo = function(callback) {
 
 // 获取协调器数据
 exports.getCoordinatorTweets = function(matchId, currentPage, pageSize, callback) {
+<<<<<<< HEAD
 	const sql = `SELECT * FROM router WHERE id_main = ${matchId} AND event_type = 'stop' ORDER BY router_id DESC LIMIT ${(currentPage-1)*pageSize}, ${pageSize}`;
+=======
+	const sql = `SELECT * FROM router WHERE id_main = ${matchId} AND event_type = 'stop' AND link_status != 'NULL' AND LENGTH(link_status) >= 5 ORDER BY router_id DESC LIMIT ${(currentPage-1)*pageSize}, ${pageSize}`;
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
 	console.log(sql);
 	database.query(sql, async (err, data)=> {
 		if (!err && data.length !== 0) {
@@ -117,9 +134,19 @@ exports.getCoordinatorTweets = function(matchId, currentPage, pageSize, callback
 				const sql = `SELECT * FROM router WHERE id_main = ${matchId} AND event_type = 'start' AND event_time < '${data[i].event_time.Format("yy-MM-dd hh:mm:ss")}' ORDER BY router_id DESC LIMIT 0, 1;`
 				console.log(sql);
 				const temp = await query(sql);
+<<<<<<< HEAD
 				data[i].adc_main = temp[0].adc_main;
 				data[i].temper_main = temp[0].temper_main;
 				data[i].start_time = temp[0].event_time;
+=======
+				if (temp[0]) {
+					data[i].adc_main = temp[0].adc_main;
+					data[i].temper_main = temp[0].temper_main;
+					data[i].start_time = temp[0].event_time;
+				} else {
+					data[i].start_time = "暂无T数据";
+				}
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
 			}
 		}
 		callback(err, data);
@@ -128,7 +155,7 @@ exports.getCoordinatorTweets = function(matchId, currentPage, pageSize, callback
 
 // 获取协调器数据的个数
 exports.getTotalCoordinatorCount = function(matchId, callback) {
-	const sql = `SELECT COUNT(router_id) count FROM router WHERE id_main = ${matchId}`;
+	const sql = `SELECT COUNT(router_id) count FROM router WHERE id_main = ${matchId} AND event_type = 'stop' AND link_status != 'NULL' AND LENGTH(link_status) >= 5`;
 	console.log(sql);
 	database.query(sql, (err, data)=> {
 		callback(err, data[0].count);
@@ -220,5 +247,20 @@ exports.test = async function(matchId, callback) {
 	}
 	
 }
+<<<<<<< HEAD
+=======
+exports.getWorkData = function(matchId, startTime, endTime, callback) {
+	const sql = `SELECT * FROM sensor WHERE id_main= '${matchId}' AND read_time BETWEEN '${startTime}' AND '${endTime}'`
+	database.query(sql, (err, data)=> {
+		if (err) return callback(err, null);
+		data.forEach(obj=> {
+			obj["aeae_counts"] = obj.sensordata.match(/aeae/g)?.length || 0;
+			delete obj["sensordata"];
+			obj["read_time"] = obj.read_time.Format("yy-MM-dd hh:mm:ss");
+		})
+		callback(err, data);
+	})
+}
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
 
 

@@ -1,20 +1,26 @@
-const express = require('express')
-const bodyParser = require('body-parser')
-const db = require('./db')
-const accountRouter = require('./accountRouter')
-const tweetRouter = require('./tweetRouter')
-const cors = require('cors')
-const md5 = require('md5-node')
-const {jwtAuth, createToken} = require('./token')
+const express = require('express');
+const bodyParser = require('body-parser');
+const db = require('./db');
+const accountRouter = require('./accountRouter');
+const tweetRouter = require('./tweetRouter');
+const cors = require('cors');
+const md5 = require('md5-node');
+const {jwtAuth, createToken} = require('./token');
+const history = require("connect-history-api-fallback");
 
 const app = express()
 
+// 使用打包的静态资源访问网页不需要跨域
 app.use(cors({
 	origin: "*",
 	credentials: true
 }))
-app.use(jwtAuth)
-app.use(express.static(__dirname + '/static'))
+// 与前端的history模式的路由相匹配适配
+app.use(history());
+// 通过根路径直接访问静态资源~/dist/内的内容，默认访问index.html
+app.use(express.static(__dirname + '/history_dist'));
+// 使用jwt验证之前的路由（即静态资源）不需要token验证，改代码之后的路由需要进行jwt验证
+app.use(jwtAuth);
 
 
 //解决跨域问题
@@ -28,15 +34,15 @@ app.use(express.static(__dirname + '/static'))
 // })
 
 //对POST请求过来的数据进行解析
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
 	extended: false
-}))
+}));
 
 //使得accounts接口可用
-app.use("/accounts", accountRouter)
+app.use("/accounts", accountRouter);
 //使得tweets接口可用
-app.use("/tweets", tweetRouter)
+app.use("/tweets", tweetRouter);
 
 // 用户登录并设置token令牌
 app.post("/login", function(req, res) {
@@ -85,7 +91,7 @@ app.get("/test", function(req, res) {
 })
 
 app.listen(3000, err => {
-	if (!err) console.log('Successful Connection! Please Start Your Operation! The Port 3000')
+	if (!err) console.log('Successful Connection! Please Start Your Operation! The Port 3000');
 })
 
 

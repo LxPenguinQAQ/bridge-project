@@ -109,12 +109,15 @@
                 timer_1: null,
                 // 判断是否获取按钮状态
                 judgeGetStatus: true,
+<<<<<<< HEAD
                 // 存放红色按钮
                 alertList: [],
                 // 音频对象
                 alertSound: new Audio('./alertSound.mp3'),
                 alertInterval: null,
                 judgeAlertSound: true,
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
             }
         },
         computed: {
@@ -285,6 +288,7 @@
             // 测试用接口
             test() {
                 this.$router.push("/Temp");
+<<<<<<< HEAD
             },
 
             // 关闭警报
@@ -293,6 +297,8 @@
                 clearInterval(this.alertInterval);
                 this.alertSound.pause();
                 this.alertSound.src = './alertSound.mp3';
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
             }
         },
         created() {
@@ -331,17 +337,23 @@
                     for (let i=0; i<this.matchData.length; i++) {
                         this.$refs[this.matchData[i].installAddress][0].state=0;
                     }
+<<<<<<< HEAD
                     const alertList = [];
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
                     for (let i=0; i<tweets.length; i++) {
                         if (this.$refs[tweets[i].bridge_id]) {
                             if (tweets[i].amplitude > this.alarmThreshold1) {
                                 this.$refs[tweets[i].bridge_id][0].state = 1;
+<<<<<<< HEAD
                                 const obj = {
                                     bridge_id: tweets[i].bridge_id,
                                     ref: this.$refs[tweets[i].bridge_id][0],
                                     amplitude: tweets[i].amplitude
                                 };
                                 alertList.push(obj);
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
                             } else if (tweets[i].amplitude > this.alarmThreshold2) {
                                 this.$refs[tweets[i].bridge_id][0].state = 2;
                             } else if (tweets[i].amplitude > this.alarmThreshold3) {
@@ -354,14 +366,21 @@
                         }
                     }
                     this.judgeGetStatus = true;
+<<<<<<< HEAD
                     this.alertList = alertList;
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
                 })
             } else {
                 console.log("上次getNodeStatus请求未响应");
             }
         },
         mounted() {
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
         },
         watch: {
             form: {
@@ -398,12 +417,15 @@
                             if (this.$refs[tweets[i].bridge_id]) {
                                 if (tweets[i].amplitude > this.alarmThreshold1) {
                                     this.$refs[tweets[i].bridge_id][0].state = 1;
+<<<<<<< HEAD
                                     const obj = {
                                         bridge_id: tweets[i].bridge_id,
                                         ref: this.$refs[tweets[i].bridge_id][0],
                                         amplitude: tweets[i].amplitude
                                     };
                                     alertList.push(obj);
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
                                 } else if (tweets[i].amplitude > this.alarmThreshold2) {
                                     this.$refs[tweets[i].bridge_id][0].state = 2;
                                 } else if (tweets[i].amplitude > this.alarmThreshold3) {
@@ -416,12 +438,16 @@
                             }
                         }
                         this.judgeGetStatus = true;
+<<<<<<< HEAD
                         this.alertList = alertList;
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
                     })
                 } else {
                     console.log("上次getNodeStatus请求未响应");
                 }
             },
+<<<<<<< HEAD
             alertList(newV, oldV) {
                 if (this.judgeAlertSound) {
                     const judge_1 = Boolean(newV.length);
@@ -455,6 +481,8 @@
                     return;
                 }
             }
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
         },
         activated() {
             console.log("BtnPage组件激活,定时器启动");
@@ -467,17 +495,23 @@
                         for (let i=0; i<this.matchData.length; i++) {
                             this.$refs[this.matchData[i].installAddress][0].state=0;
                         }
+<<<<<<< HEAD
                         const alertList = [];
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
                         for (let i=0; i<tweets.length; i++) {
                             if (this.$refs[tweets[i].bridge_id]) {
                                 if (tweets[i].amplitude > this.alarmThreshold1) {
                                     this.$refs[tweets[i].bridge_id][0].state = 1;
+<<<<<<< HEAD
                                     const obj = {
                                         bridge_id: tweets[i].bridge_id,
                                         ref: this.$refs[tweets[i].bridge_id][0],
                                         amplitude: tweets[i].amplitude
                                     };
                                     alertList.push(obj);
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
                                 } else if (tweets[i].amplitude > this.alarmThreshold2) {
                                     this.$refs[tweets[i].bridge_id][0].state = 2;
                                 } else if (tweets[i].amplitude > this.alarmThreshold3) {
@@ -490,7 +524,10 @@
                             }
                         }
                         this.judgeGetStatus = true;
+<<<<<<< HEAD
                         this.alertList = alertList;
+=======
+>>>>>>> ba949ca4f0302236e2dbf8cb9612fa80613b05c3
                     })
                 } else {
                     console.log("上次getNodeStatus请求未响应");

@@ -45,7 +45,7 @@ router.post("/getTweetsForPicByTime", function(req, res) {
 	})
 })
 
-//根据列表单行ID获取Tweet信息
+//根据列表单行ID获取Tweet信息，数据用于绘制加速度图
 router.get("/getSearchSingleTweets", function(req, res) {
 	const {searchId} = req.query;
 	db.getSearchSingleTweets(searchId, function(err, tweets) {
@@ -216,6 +216,24 @@ router.get("/getAllTweetsAccount", function(req, res) {
 			})
 		}
 	})
+})
+
+router.post("/getWorkData", function(req, res) {
+	const {matchId} = req.query;
+	const {startTime, endTime} = req.body;
+	db.getWorkData(matchId, startTime, endTime, function(err, data) {
+		if (err) {
+			res.status(500).send({
+				msg: "get work data failed as server error"
+			})
+		} else if (data) {
+			res.status(200).send(data)
+		} else {
+			res.status(404).send({
+				msg: "get work data count failed as request error"
+			})
+		}
+	}) 
 })
 
 module.exports = router

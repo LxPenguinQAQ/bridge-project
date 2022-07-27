@@ -3,10 +3,10 @@ const db = {};
 const mysql = require('mysql');
 const pool = mysql.createPool({
     // connectionLimit: 10,
-    host: 'xx.xx.xx.xxx',
+    host: '47.97.11.140',
     user: 'root',
-    password: 'xxxxxxxx',
-    database: 'xxxxxxxxxx',
+    password: 'njupt202',
+    database: 'bridgedata',
     // 统一数据库时区
     timezone: "utc"
 });

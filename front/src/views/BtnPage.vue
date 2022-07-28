@@ -1,5 +1,8 @@
 <template>
     <div id="BtnPage">
+        <div v-if="isShowProgress" class="popContainer">
+            <el-progress :width="250" type="circle" :stroke-width="20" :percentage="percentage" color="#409EFF" v-if="isShowProgress" style="position: relative; top: 50%; transform: translateY(-50%)"></el-progress>
+        </div>
         <el-container>
             <!-- 用户信息界面 -->
             <el-aside width="200px">
@@ -115,6 +118,8 @@
                 alertSound: new Audio('./alertSound.mp3'),
                 alertInterval: null,
                 judgeAlertSound: true,
+                isShowProgress: false,
+                percentage: 0,
             }
         },
         computed: {
@@ -182,6 +187,9 @@
         },
         components: {MyButton},
         methods: {
+            sleep(time) {
+                return new Promise(res=> {setTimeout(res, time)});
+            },
             //退出登录，清除sessionStorage中的用户信息并跳转到登录页
 			logout() {
 				sessionStorage.removeItem("persons");
@@ -327,7 +335,20 @@
             })
             if (this.judgeGetStatus) {
                 this.judgeGetStatus = false;
-                client.getNodeStatus((tweets)=> {
+                this.isShowProgress = true;
+                const m = this.$message({
+                    message: '正加速从服务器获取数据',
+                    duration: 0,
+                    type: 'info',
+                    offset: document.documentElement.clientHeight / 2 - 20,
+                    center: true
+                })
+                client.getNodeStatus(async (tweets)=> {
+                    m.close();
+                    // 获取进度条数据，有多少数据会展示
+                    const effectiveLen = tweets.filter(tweet=> this.matchIdArr.includes(tweet.macaddress)).length;
+                    let realLen = 0;
+
                     for (let i=0; i<this.matchData.length; i++) {
                         this.$refs[this.matchData[i].installAddress][0].state=0;
                     }
@@ -350,6 +371,16 @@
                                 this.$refs[tweets[i].bridge_id][0].state = 4;
                             } else {
                                 this.$refs[tweets[i].bridge_id][0].state = 0;
+                            }
+                            realLen++;
+                            const comPercentage = Math.floor((realLen / effectiveLen)*100)
+                            if (comPercentage % 5 === 0) {
+                                this.percentage = comPercentage;
+                                await this.sleep(35);
+                            }
+                            console.log(this.percentage)
+                            if (this.percentage === 100) {
+                                this.isShowProgress = false;
                             }
                         }
                     }
@@ -429,14 +460,18 @@
                     if (judge_1 === judge_2) {
                         return;
                     } else if (judge_1) {
-                        this.$notify({
-                            title: '警告',
-                            message: '这是一条警告的提示消息',
+                        this.$confirm('有按钮为红色，请确认！', '警告', {
+                            confirmButtonText: '确定',
                             type: 'warning',
-                            duration: 0,
-                            onClose: this.closeAlertSound,
-
-                        });
+                            center: true,
+                            showCancelButton: false
+                        }).then(()=> {
+                            this.closeAlertSound();
+                            this.$message({
+                                type: 'info',
+                                message: '警报声关闭'
+                            });
+                        })
                         const func = ()=> {
                             this.alertSound.play();
                             setTimeout(()=> {
@@ -506,6 +541,18 @@
 </script>
 
 <style lang="css" scoped>
+    .popContainer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10;
+        background: rgba(0, 0, 0, 0.6);
+        text-align: center;
+    }
+
+    .popContainer >>> .el-progress__text{ color: white }
 
     h2 {
         text-align: center;

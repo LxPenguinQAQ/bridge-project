@@ -126,13 +126,13 @@ export default {
             this.formCustom.mail,
             () => {
                 let personConRegister = {user: this.formCustom.user}
-                let personlists = JSON.parse(localStorage.getItem("persons") || "[]");
+                let personlists = JSON.parse(sessionStorage.getItem("persons") || "[]");
 
                 // 仅存放最近10个用户的用户名
                 if (personlists.length === 10) personlists.shift();
 
                 personlists.unshift(personConRegister);
-                localStorage.setItem("persons", JSON.stringify(personlists));
+                sessionStorage.setItem("persons", JSON.stringify(personlists));
                 this.formCustom = "";
                 this.$router.push("/BtnPage");
             }

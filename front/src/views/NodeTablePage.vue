@@ -253,7 +253,7 @@
 				this.msgTime = time
 				this.modal1 = true
 
-				let judegExist = JSON.parse(localStorage.getItem("persons"))
+				let judegExist = JSON.parse(sessionStorage.getItem("persons"))
 				if (judegExist) {
 					client.getSearchSingleTweets(id, (tweets) => {
 						let readData = tweets[0]["sensordata"]

@@ -14,7 +14,7 @@ const myAxios = axios.create({
 
 // 拦截器，请求头部统一添加token，同意错误处理
 myAxios.interceptors.request.use(req=> {
-    const token = localStorage.getItem('Token');
+    const token = sessionStorage.getItem('Token');
     if (token) {
         req.headers.Authorization  = `Bearer ${token}`;
     }
@@ -29,7 +29,7 @@ myAxios.interceptors.response.use(res=>{
 }, err=> {
     if (err.response?.statusText === "Unauthorized") {
         _this.$Message.error("token expired, please login again");
-        localStorage.removeItem("Token"); 
+        sessionStorage.removeItem("Token"); 
         _this.$router.replace("/");
     } else {
         _this.$Message.error(err.response.data.msg);

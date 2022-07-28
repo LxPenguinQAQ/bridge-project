@@ -9,7 +9,7 @@ export const login = function(username, password, callback) {
 	}).then(res=> {
 		if (res.status) {
 			if (res.token) {
-				localStorage.setItem('Token', res.token);
+				sessionStorage.setItem('Token', res.token);
 			}
 			callback();
 		}
@@ -26,7 +26,7 @@ export const createAccount = function(username, password, passwordRepeat, email,
 	}).then(res=> {
 		if (res.status) {
 			if (res.token) {
-				localStorage.setItem('Token', res.token);
+				sessionStorage.setItem('Token', res.token);
 			}
 			callback();
 		}

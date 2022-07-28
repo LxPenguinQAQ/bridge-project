@@ -182,10 +182,10 @@
         },
         components: {MyButton},
         methods: {
-            //退出登录，清除localStorage中的用户信息并跳转到登录页
+            //退出登录，清除sessionStorage中的用户信息并跳转到登录页
 			logout() {
-				localStorage.removeItem("persons");
-                localStorage.removeItem("Token");
+				sessionStorage.removeItem("persons");
+                sessionStorage.removeItem("Token");
 				this.$router.push("/")
 			},
             // 设置界面
@@ -304,9 +304,9 @@
 
 
             //如果用户名未登录， 返回空。做判断防止报错
-            let judegExist = JSON.parse(localStorage.getItem("persons"));
+            let judegExist = JSON.parse(sessionStorage.getItem("persons"));
             if (judegExist) {
-                this.user = JSON.parse(localStorage.getItem("persons"))[0].user;
+                this.user = JSON.parse(sessionStorage.getItem("persons"))[0].user;
             } else {
                 this.user = "未登录!";
             }

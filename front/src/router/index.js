@@ -62,7 +62,7 @@ router.beforeEach(({name}, from, next)=> {
 	if (name === 'home' || name === 'register' || name === 'temp') {
 		next();
 	} else {
-		if (localStorage.getItem('Token')) {
+		if (sessionStorage.getItem('Token')) {
 			next();
 		} else {
 			new Vue().$Message.info("please login")

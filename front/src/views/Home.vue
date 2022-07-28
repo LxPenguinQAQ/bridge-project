@@ -96,14 +96,14 @@
               this.formInline.user,
               this.formInline.password,
               () => {
-                //先将用户信息存储到localStorage
+                //先将用户信息存储到sessionStorage
                 let personCon = {user: this.formInline.user,};
-                let personlists = JSON.parse(localStorage.getItem("persons") || "[]");
+                let personlists = JSON.parse(sessionStorage.getItem("persons") || "[]");
                 // 仅存放最近10个用户的用户名
                 if (personlists.length === 10) personlists.shift();
 
                 personlists.unshift(personCon);
-                localStorage.setItem("persons", JSON.stringify(personlists));
+                sessionStorage.setItem("persons", JSON.stringify(personlists));
                 this.formInline = {user: "",password: ""};
                 this.$router.push("/BtnPage");
               }

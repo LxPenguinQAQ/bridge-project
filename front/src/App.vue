@@ -28,18 +28,7 @@
 				this.isShow = !this.isShow;
 				this.style = this.style === "main_1" ? "main_2" : "main_1"; 
 			},
-			clearLogin(event) {
-				// 判断页面为关闭时执行
-				localStorage.removeItem("persons");
-				localStorage.removeItem("Token");
-			}
 		},
-		mounted() {
-			window.addEventListener('unload', e => this.clearLogin(e))
-		},
-		destroyed() {
-			window.removeEventListener('unload', e => this.clearLogin(e))
-		}
 	}
 </script>
 

@@ -1,9 +1,9 @@
 const mysql = require('mysql')
 const pool = mysql.createPool({
-  host     :  '47.97.11.140',
-  user     :  'root',
-  password :  'njupt202',
-  database :  'bridgedata',
+  host     :  'xxxx',
+  user     :  'xxxx',
+  password :  'xxxx',
+  database :  'xxxx',
   timezone: "utc",
   multipleStatements: true // 设置可以同时查询多条语句
 })

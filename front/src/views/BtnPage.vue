@@ -76,6 +76,7 @@
 
 <script>
     import MyButton from "./MyButton.vue"
+    import { MessageBox } from 'element-ui';
 
     const client = require("../client")
     export default {
@@ -110,16 +111,22 @@
                 coordinatorData: [],
                 refresh: true,
                 timer_1: null,
-                // 判断是否获取按钮状态
+                // 判断是否获取按钮状态，节流用
                 judgeGetStatus: true,
                 // 存放红色按钮
                 alertList: [],
                 // 音频对象
                 alertSound: new Audio('./alertSound.mp3'),
+                // 警报声定时器
                 alertInterval: null,
+                // 全局判断是否播放音频
                 judgeAlertSound: true,
+                // 是否展示进度
                 isShowProgress: false,
+                // 状态加载百分比
                 percentage: 0,
+                // 确认信息弹窗
+                confirmAlert: null,
             }
         },
         computed: {
@@ -181,7 +188,7 @@
                         matchIdArr.push(obj.macaddress)
                     })
                 })
-                return matchIdArr
+                return matchIdArr;
             },
 
         },
@@ -333,6 +340,7 @@
                     return m - n;
                 })
             })
+            // 刷新后执行
             if (this.judgeGetStatus) {
                 this.judgeGetStatus = false;
                 this.isShowProgress = true;
@@ -378,7 +386,6 @@
                                 this.percentage = comPercentage;
                                 await this.sleep(35);
                             }
-                            console.log(this.percentage)
                             if (this.percentage === 100) {
                                 this.isShowProgress = false;
                             }
@@ -460,16 +467,24 @@
                     if (judge_1 === judge_2) {
                         return;
                     } else if (judge_1) {
-                        this.$confirm('有按钮为红色，请确认！', '警告', {
+                        this.confirmAlert = this.$confirm('有按钮为红色，请确认！', '警告', {
                             confirmButtonText: '确定',
                             type: 'warning',
                             center: true,
-                            showCancelButton: false
+                            showCancelButton: false,
+                            // 是否展示右上角关闭按钮
+                            showClose: false,
+                            // 是否点击遮罩关闭
+                            closeOnClickModal: false,
+                            // 是否esc关闭
+                            closeOnPressEscape: false,
+                            // 关闭后的回调函数
+                            // callback: this.closeAlertSound
                         }).then(()=> {
                             this.closeAlertSound();
                             this.$message({
                                 type: 'info',
-                                message: '警报声关闭'
+                                message: '警报声关闭',
                             });
                         })
                         const func = ()=> {
@@ -477,14 +492,15 @@
                             setTimeout(()=> {
                                 this.alertSound.pause();
                                 this.alertSound.src = './alertSound.mp3';
-                            }, 30*1000);
+                            }, 3*1000);
                             return func;
                         }
-                        this.alertInterval = setInterval(func(), 5*60*1000);
+                        this.alertInterval = setInterval(func(), 10*1000);
                     } else {
                         this.alertSound.pause();
                         this.alertSound.src = './alertSound.mp3';
                         clearInterval(this.alertInterval);
+                        MessageBox.close()
                     }
                 } else {
                     return;
@@ -493,7 +509,6 @@
         },
         activated() {
             console.log("BtnPage组件激活,定时器启动");
-            console.log(this.$refs["29-01 "])
             this.timer_1 = setInterval(()=> {
                 // 根据数据库信息判断按钮颜色
                 if (this.judgeGetStatus) {

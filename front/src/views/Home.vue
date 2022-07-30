@@ -105,7 +105,7 @@
                 personlists.unshift(personCon);
                 sessionStorage.setItem("persons", JSON.stringify(personlists));
                 this.formInline = {user: "",password: ""};
-                this.$router.push("/BtnPage");
+                this.$router.replace("/BtnPage");
               }
             )
           } else {

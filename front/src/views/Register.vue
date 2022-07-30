@@ -134,7 +134,7 @@ export default {
                 personlists.unshift(personConRegister);
                 sessionStorage.setItem("persons", JSON.stringify(personlists));
                 this.formCustom = "";
-                this.$router.push("/BtnPage");
+                this.$router.replace("/BtnPage");
             }
           )
         } else {
